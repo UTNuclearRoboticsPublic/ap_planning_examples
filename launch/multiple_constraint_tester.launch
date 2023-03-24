@@ -1,0 +1,5 @@
+<launch>
+  <node name="multi_constraint_tester" pkg="ap_planning_examples" type="multi_constraint_tester" output="screen" />
+
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find ap_planning_examples)/config/multi_constraint.rviz" />
+</launch>

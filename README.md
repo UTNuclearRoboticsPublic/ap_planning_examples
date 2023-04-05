@@ -28,3 +28,11 @@ This repository also contains a tool for visualizing the screw-constraint functi
 ```sh
 roslaunch ap_planning_examples multiple_constraint_tester.launch
 ```
+
+## Versioning
+Note that this project is under constant development. The following versions are the latest ones that are known to work with these examples:
+| Repository | Version |
+| ---------- | ------- |
+| [affordance_primitives](https://github.com/UTNuclearRobotics/affordance_primitives) | [v1.0.0](https://github.com/UTNuclearRobotics/affordance_primitives/releases/tag/v1.0.0)
+| [ap_planning](https://github.com/UTNuclearRoboticsPublic/ap_planning) | [v1.0.0](https://github.com/UTNuclearRoboticsPublic/ap_planning/releases/tag/v1.0.0)
+| [ap_planning_examples](https://github.com/UTNuclearRoboticsPublic/ap_planning_examples) | [v1.0.0](https://github.com/UTNuclearRoboticsPublic/ap_planning_examples/releases/tag/v1.0.0)

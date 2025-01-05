@@ -273,11 +273,12 @@ int main(int argc, char **argv)
     // single_request.start_pose.pose.position.x = 0.5;
     // single_request.start_pose.pose.position.z = 0.3;
     single_request.start_pose.pose.position.x = 0.1;
+    single_request.start_pose.pose.position.y = 0.1;
     single_request.start_pose.pose.position.z = 0.1;
     // single_request.start_pose.pose.orientation.x = 1.0;
     // single_request.start_pose.pose.orientation.w = 0;
-    single_request.start_pose.pose.orientation.x = 1.0;
-    single_request.start_pose.pose.orientation.w = 0;
+    single_request.start_pose.pose.orientation.x = 0.0;
+    single_request.start_pose.pose.orientation.w = 1.0;
 
     // Add some test cases
     single_request.screw_path.at(0).start_theta = 0.0;

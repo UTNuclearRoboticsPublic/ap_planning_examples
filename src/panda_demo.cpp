@@ -272,10 +272,10 @@ int main(int argc, char **argv)
     // For now, all requests start at same point
     // single_request.start_pose.pose.position.x = 0.5;
     // single_request.start_pose.pose.position.z = 0.3;
+    single_request.start_pose.pose.position.x = 0.1;
+    single_request.start_pose.pose.position.z = 0.1;
     // single_request.start_pose.pose.orientation.x = 1.0;
     // single_request.start_pose.pose.orientation.w = 0;
-    single_request.start_pose.pose.position.x = 0.0;
-    single_request.start_pose.pose.position.z = 0.0;
     single_request.start_pose.pose.orientation.x = 1.0;
     single_request.start_pose.pose.orientation.w = 0;
 
@@ -419,7 +419,6 @@ int main(int argc, char **argv)
         {
             ap_planning::APPlanningResponse sps_output;
             auto start = std::chrono::high_resolution_clock::now();
-            req.start_joint_state = default_joint_state;
             auto sps_res = sequential_step_planner.plan(req, sps_output);
             auto stop = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);

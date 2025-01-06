@@ -1,0 +1,12 @@
+<launch>
+  <arg name="move_group_name" default="right_ur5" />
+  <arg name="ik_solver_name" default="ap_planning::IKSolver" />
+  <arg name="robot_description_name" default="/vaultbot/robot_manager/robots/vaultbot/robot_description" />
+
+  <node name="vb_screw_planning" pkg="vbats" type="vb_screw_planning" output="screen" ns="/vaultbot/robot_manager/robots/vaultbot">
+    <rosparam command="load" file="$(find vaultbot_tools_moveit_config)/config/kinematics.yaml"/>
+    <param name="move_group_name" type="string" value="$(arg move_group_name)" />
+    <param name="ik_solver_name" type="string" value="$(arg ik_solver_name)" />
+    <param name="robot_description_name" type="string" value="$(arg robot_description_name)" />
+  </node>
+</launch>

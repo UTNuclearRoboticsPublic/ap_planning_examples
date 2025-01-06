@@ -1,0 +1,8 @@
+<library path="lib/libvbats">
+  <class type="vbats::VBParamManager" base_class_type="affordance_primitives::ParameterManager">
+    <description>Manages setting the compliance and control parameters for VaultBot</description>
+  </class>
+  <class type="vbats::IoRTTaskEstimator" base_class_type="affordance_primitives::TaskEstimator">
+    <description>Estimate valve angles from IoRT sensors</description>
+  </class>
+</library>

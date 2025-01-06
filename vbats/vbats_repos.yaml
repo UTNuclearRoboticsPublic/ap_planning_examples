@@ -1,0 +1,13 @@
+repositories:
+  affordance_primitives:
+    type: git
+    url: git@github.com:UTNuclearRobotics/affordance_primitives.git
+    version: noetic
+  compliance_controller:
+    type: git
+    url: git@github.com:UTNuclearRobotics/compliance_controller.git
+    version: main
+  vbats:
+    type: git
+    url: git@github.com:UTNuclearRobotics/vbats.git
+    version: noetic

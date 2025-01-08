@@ -155,9 +155,11 @@ int main(int argc, char **argv)
 
     moveit::core::RobotStatePtr kinematic_state(new moveit::core::RobotState(kinematic_model));
     // std::vector<double> default_joint_state{-1.654, -0.53, -1.961, 0.539, 0.525, -0.69};
-    std::vector<double> default_joint_state{-0.00015592575073242188, -0.8980185389518738,
-                                            1.8094338178634644,      0.000377655029296875,
-                                            -0.8991076946258545,     0.0015475749969482422}; // READY
+    // std::vector<double> default_joint_state{-0.00015592575073242188, -0.8980185389518738,
+    //                                         1.8094338178634644,      0.000377655029296875,
+    //                                         -0.8991076946258545,     0.0015475749969482422}; // READY
+    std::vector<double> default_joint_state{0.01769, -1.27994, 2.13614,
+                                            0.04380, -0.84493, -0.07706}; // VALVE TURN CASE 3
     // std::vector<double> default_joint_state = {-0.00415325, -1.3191, 2.291, 0.067544, -1.8325, -0.0605698}; //
     // NAMASTE
     kinematic_state->setJointGroupPositions("arm", default_joint_state);
@@ -240,7 +242,7 @@ int main(int argc, char **argv)
     // single_request.start_pose.pose.position.z = 0.1;
     single_request.start_pose.pose.position.x = fk_pos[0];
     single_request.start_pose.pose.position.y = fk_pos[1];
-    single_request.start_pose.pose.position.z = fk_pos[2] + 0.5;
+    single_request.start_pose.pose.position.z = fk_pos[2];
     // single_request.start_pose.pose.orientation.x = 0.076;
     // single_request.start_pose.pose.orientation.y = -0.010;
     // single_request.start_pose.pose.orientation.z = -0.013;
@@ -257,10 +259,14 @@ int main(int argc, char **argv)
     // Add some test cases
     screw1.screw_msg.header.frame_id = "base_link";
     screw1.start_theta = 0.0;
-    screw1.end_theta = 0.5 * M_PI;
-    screw1.screw_msg.origin = single_request.start_pose.pose.position;
-    screw1.screw_msg.origin.z -= 0.2;
-    screw1.screw_msg.axis.x = 1;
+    // screw1.end_theta = 29.0 / 36.0 * M_PI;
+    screw1.end_theta = 3.0 / 4.0 * M_PI;
+    // screw1.screw_msg.origin = single_request.start_pose.pose.position;
+    // screw1.screw_msg.origin.z -= 0.2;
+    screw1.screw_msg.origin.x = 0.617247;  // VALVE TURN CASE 3
+    screw1.screw_msg.origin.y = 0.0635829; // VALVE TURN CASE 3
+    screw1.screw_msg.origin.z = 0.224735;  // VALVE TURN CASE 3
+    screw1.screw_msg.axis.x = -1;
     single_request.screw_path.push_back(screw1);
     planning_queue.push(single_request);
 

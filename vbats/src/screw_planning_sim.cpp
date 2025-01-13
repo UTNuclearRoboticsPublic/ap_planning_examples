@@ -138,6 +138,34 @@ std::queue<moveit_msgs::CollisionObject> get_collision_objects()
     return output;
 }
 
+double calculate_joint_distance(const trajectory_msgs::JointTrajectory &traj)
+{
+    double total_joint_space_distance = 0.0;
+    for (size_t i = 1; i < traj.points.size(); ++i)
+    {
+        const auto &prev_wp = traj.points[i - 1];
+        const auto &curr_wp = traj.points[i];
+
+        double distance = 0.0;
+        for (size_t j = 0; j < prev_wp.positions.size(); ++j)
+        {
+            double diff = curr_wp.positions[j] - prev_wp.positions[j];
+            distance += diff * diff;
+        }
+        total_joint_space_distance += std::sqrt(distance);
+    }
+    return total_joint_space_distance;
+}
+
+struct TaskInfo
+{
+    Eigen::Matrix<double, 6, 1> start_state;
+    Eigen::Vector3d screw_axis;
+    Eigen::Vector3d screw_location;
+    double screw_goal;
+    double pitch;
+};
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "ap_planning");
@@ -150,30 +178,40 @@ int main(int argc, char **argv)
         ros::console::notifyLoggerLevelsChanged();
     }
 
+    //--------------------------------------//
+    // Define task
+    TaskInfo task_info;
+
+    task_info.start_state =
+        (Eigen::VectorXd(6) << 0.01769, -1.27994, 2.13614, 0.04380, -0.84493, -0.07706).finished(); // VALVE TURN CASE 3
+    task_info.screw_axis = Eigen::Vector3d(-1, 0, 0);
+    task_info.screw_location = Eigen::Vector3d(0.617247, 0.0635829, 0.224735);
+    task_info.screw_goal = 3.0 / 4.0 * M_PI;
+
+    //--------------------------------------//
+
     robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
     const moveit::core::RobotModelPtr &kinematic_model = robot_model_loader.getModel();
 
     moveit::core::RobotStatePtr kinematic_state(new moveit::core::RobotState(kinematic_model));
-    // std::vector<double> default_joint_state{-1.654, -0.53, -1.961, 0.539, 0.525, -0.69};
     // std::vector<double> default_joint_state{-0.00015592575073242188, -0.8980185389518738,
     //                                         1.8094338178634644,      0.000377655029296875,
     //                                         -0.8991076946258545,     0.0015475749969482422}; // READY
-    std::vector<double> default_joint_state{0.01769, -1.27994, 2.13614,
-                                            0.04380, -0.84493, -0.07706}; // VALVE TURN CASE 3
     // std::vector<double> default_joint_state = {-0.00415325, -1.3191, 2.291, 0.067544, -1.8325, -0.0605698}; //
     // NAMASTE
+    std::vector<double> default_joint_state(task_info.start_state.data(),
+                                            task_info.start_state.data() + task_info.start_state.size());
+
     kinematic_state->setJointGroupPositions("arm", default_joint_state);
 
     auto fk = kinematic_state->getGlobalLinkTransform("arm0_tool0");
     const Eigen::Vector3d fk_pos = fk.translation();
     const Eigen::Quaterniond fk_quat(fk.rotation());
+
     // Print results
     ROS_INFO_STREAM("fk_pos: " << fk_pos.transpose());
     ROS_INFO_STREAM("fk_quat: [x: " << fk_quat.x() << ", y: " << fk_quat.y() << ", z: " << fk_quat.z()
                                     << ", w: " << fk_quat.w() << "]");
-    // Set left arm to show
-    // std::vector<double> left_stow{2.793, -2.8863, 1.7453, -1.6581, -3.0543, 0.0};
-    // kinematic_state->setJointGroupPositions("left_ur5", left_stow);
 
     int num_sample, num_sps;
     nh.param<int>(ros::this_node::getName() + "/num_sampling", num_sample, 2);
@@ -233,24 +271,10 @@ int main(int argc, char **argv)
 
     ap_planning::ScrewSegment screw1, screw2, screw3;
 
-    // For now, all requests start at same point
-    // single_request.start_pose.pose.position.x = 0.768;
-    // single_request.start_pose.pose.position.y = -0.265;
-    // single_request.start_pose.pose.position.z = 0.854;
-    // single_request.start_pose.pose.position.x = 0.1;
-    // single_request.start_pose.pose.position.y = -0.1;
-    // single_request.start_pose.pose.position.z = 0.1;
+    // We'll plan from the default joint states for these experiments
     single_request.start_pose.pose.position.x = fk_pos[0];
     single_request.start_pose.pose.position.y = fk_pos[1];
     single_request.start_pose.pose.position.z = fk_pos[2];
-    // single_request.start_pose.pose.orientation.x = 0.076;
-    // single_request.start_pose.pose.orientation.y = -0.010;
-    // single_request.start_pose.pose.orientation.z = -0.013;
-    // single_request.start_pose.pose.orientation.w = 0.997;
-    // single_request.start_pose.pose.orientation.x = 0;
-    // single_request.start_pose.pose.orientation.y = 0;
-    // single_request.start_pose.pose.orientation.z = 0;
-    // single_request.start_pose.pose.orientation.w = 1.0;
     single_request.start_pose.pose.orientation.x = fk_quat.x();
     single_request.start_pose.pose.orientation.y = fk_quat.y();
     single_request.start_pose.pose.orientation.z = fk_quat.z();
@@ -259,92 +283,14 @@ int main(int argc, char **argv)
     // Add some test cases
     screw1.screw_msg.header.frame_id = "base_link";
     screw1.start_theta = 0.0;
-    // screw1.end_theta = 29.0 / 36.0 * M_PI;
-    screw1.end_theta = 3.0 / 4.0 * M_PI;
-    // screw1.screw_msg.origin = single_request.start_pose.pose.position;
-    // screw1.screw_msg.origin.z -= 0.2;
-    screw1.screw_msg.origin.x = 0.617247;  // VALVE TURN CASE 3
-    screw1.screw_msg.origin.y = 0.0635829; // VALVE TURN CASE 3
-    screw1.screw_msg.origin.z = 0.224735;  // VALVE TURN CASE 3
-    screw1.screw_msg.axis.x = -1;
+    screw1.end_theta = task_info.screw_goal;
+    screw1.screw_msg.origin.x = task_info.screw_location[0]; // VALVE TURN CASE 3
+    screw1.screw_msg.origin.y = task_info.screw_location[1]; // VALVE TURN CASE 3
+    screw1.screw_msg.origin.z = task_info.screw_location[2]; // VALVE TURN CASE 3
+    screw1.screw_msg.axis.x = task_info.screw_axis[0];
+    screw1.screw_msg.axis.y = task_info.screw_axis[1];
+    screw1.screw_msg.axis.z = task_info.screw_axis[2];
     single_request.screw_path.push_back(screw1);
-    planning_queue.push(single_request);
-
-    // Now another
-    single_request.screw_path.clear();
-    screw1 = ap_planning::ScrewSegment();
-    screw1.screw_msg.header.frame_id = "base_link";
-    screw1.start_theta = 0.0;
-    screw1.end_theta = 0.25 * M_PI;
-    screw1.screw_msg.origin = single_request.start_pose.pose.position;
-    screw1.screw_msg.origin.x += 0.1;
-    screw1.screw_msg.axis.x = 1;
-    screw1.screw_msg.axis.z = 1;
-    single_request.screw_path.push_back(screw1);
-    planning_queue.push(single_request);
-
-    // The valve case
-    single_request.screw_path.clear();
-    screw1 = ap_planning::ScrewSegment();
-    screw1.screw_msg.header.frame_id = "base_link";
-    screw1.start_theta = -0.1;
-    screw1.end_theta = 0.0;
-    screw1.screw_msg.axis.x = 1;
-    screw1.screw_msg.is_pure_translation = true;
-    screw1.screw_msg.origin = single_request.start_pose.pose.position;
-
-    screw2 = ap_planning::ScrewSegment();
-    screw2.screw_msg.header.frame_id = "base_link";
-    screw2.start_theta = 0.0;
-    screw2.end_theta = 0.5 * M_PI;
-    screw2.screw_msg.axis.x = -1;
-    screw2.screw_msg.is_pure_translation = false;
-    screw2.screw_msg.origin = single_request.start_pose.pose.position;
-    screw2.screw_msg.origin.y = 0.0;
-
-    screw3 = ap_planning::ScrewSegment();
-    screw3.screw_msg.header.frame_id = "base_link";
-    screw3.start_theta = 0.0;
-    screw3.end_theta = 0.1;
-    screw3.screw_msg.axis.x = -1;
-    screw3.screw_msg.is_pure_translation = true;
-    screw3.screw_msg.origin = single_request.start_pose.pose.position;
-
-    single_request.screw_path.push_back(screw1);
-    single_request.screw_path.push_back(screw2);
-    single_request.screw_path.push_back(screw3);
-    planning_queue.push(single_request);
-
-    // Just a few linear screws case
-    single_request.start_pose.pose.position.x -= 0.1;
-    single_request.screw_path.clear();
-    screw1 = ap_planning::ScrewSegment();
-    screw1.screw_msg.header.frame_id = "base_link";
-    screw1.start_theta = -0.1;
-    screw1.end_theta = 0.0;
-    screw1.screw_msg.origin = single_request.start_pose.pose.position;
-    screw1.screw_msg.axis.x = 1;
-    screw1.screw_msg.is_pure_translation = true;
-
-    screw2 = ap_planning::ScrewSegment();
-    screw2.screw_msg.header.frame_id = "base_link";
-    screw2.start_theta = 0.0;
-    screw2.end_theta = 0.2;
-    screw2.screw_msg.axis.z = -1;
-    screw2.screw_msg.is_pure_translation = true;
-    screw2.screw_msg.origin = single_request.start_pose.pose.position;
-
-    screw3 = ap_planning::ScrewSegment();
-    screw3.screw_msg.header.frame_id = "base_link";
-    screw3.start_theta = 0.0;
-    screw3.end_theta = 0.2;
-    screw3.screw_msg.axis.x = -1;
-    screw3.screw_msg.is_pure_translation = true;
-    screw3.screw_msg.origin = single_request.start_pose.pose.position;
-
-    single_request.screw_path.push_back(screw1);
-    single_request.screw_path.push_back(screw2);
-    single_request.screw_path.push_back(screw3);
     planning_queue.push(single_request);
 
     ap_planning::DSSPlanner ap_planner("arm");
@@ -408,6 +354,9 @@ int main(int argc, char **argv)
                 std::cout << "Trajectory is: " << result.percentage_complete * 100
                           << "% complete, and has length: " << result.path_length
                           << ", is valid: " << result.trajectory_is_valid << "\n";
+                ROS_WARN("Planning time: %.6f seconds", duration.count() / 1e6);
+                auto joint_distance = calculate_joint_distance(result.joint_trajectory);
+                ROS_WARN("Joint distance: %.6f", joint_distance);
 
                 if (show_trajectories)
                 {
@@ -444,6 +393,9 @@ int main(int argc, char **argv)
                 std::cout << "\n\n\nSPS planning: Success!!\n\n";
                 std::cout << "Trajectory is: " << sps_output.percentage_complete * 100
                           << "% complete, and has length: " << sps_output.path_length << "\n";
+                ROS_WARN("Planning time: %.6f seconds", duration.count() / 1e6);
+                auto joint_distance = calculate_joint_distance(sps_output.joint_trajectory);
+                ROS_WARN("Joint distance: %.6f", joint_distance);
                 if (show_trajectories)
                 {
                     show_trajectory(sps_output.joint_trajectory, visual_tools);

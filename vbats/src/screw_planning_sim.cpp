@@ -164,6 +164,7 @@ struct TaskInfo
     Eigen::Vector3d screw_location;
     double screw_goal;
     double pitch;
+    int trajectory_density;
 };
 
 int main(int argc, char **argv)
@@ -187,6 +188,11 @@ int main(int argc, char **argv)
     task_info.screw_axis = Eigen::Vector3d(-1, 0, 0);
     task_info.screw_location = Eigen::Vector3d(0.617247, 0.0635829, 0.224735);
     task_info.screw_goal = 3.0 / 4.0 * M_PI;
+    task_info.trajectory_density = 200;
+
+    double waypoint_ang = task_info.screw_goal / task_info.trajectory_density;
+    std::string n_name = ros::this_node::getName();
+    nh.setParam(n_name + "/waypoint_ang", waypoint_ang);
 
     //--------------------------------------//
 
@@ -357,6 +363,7 @@ int main(int argc, char **argv)
                 ROS_WARN("Planning time: %.6f seconds", duration.count() / 1e6);
                 auto joint_distance = calculate_joint_distance(result.joint_trajectory);
                 ROS_WARN("Joint distance: %.6f", joint_distance);
+                ROS_WARN("Number of waypoints: %zu", result.joint_trajectory.points.size());
 
                 if (show_trajectories)
                 {
@@ -396,6 +403,7 @@ int main(int argc, char **argv)
                 ROS_WARN("Planning time: %.6f seconds", duration.count() / 1e6);
                 auto joint_distance = calculate_joint_distance(sps_output.joint_trajectory);
                 ROS_WARN("Joint distance: %.6f", joint_distance);
+                ROS_WARN("Number of waypoints: %zu", sps_output.joint_trajectory.points.size());
                 if (show_trajectories)
                 {
                     show_trajectory(sps_output.joint_trajectory, visual_tools);

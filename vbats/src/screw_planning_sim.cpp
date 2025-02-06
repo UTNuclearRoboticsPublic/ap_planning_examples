@@ -27,6 +27,8 @@
 #include <affordance_primitives/screw_model/screw_axis.hpp>
 #include <ap_planning/ap_planning.hpp>
 #include <tf2_eigen/tf2_eigen.h>
+#include <traj_serv_to_action/JointTraj.h>  
+
 
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
@@ -167,10 +169,84 @@ struct TaskInfo
     int trajectory_density;
 };
 
+
+class JointStateSubscriber {
+public:
+    Eigen::VectorXd joint_positions;
+
+    JointStateSubscriber(ros::NodeHandle& nodeHandle) : nh(nodeHandle) {
+        sub = nh.subscribe("/joint_states", 10, &JointStateSubscriber::jointStateCallback, this);
+        
+        // Initialize joint_positions to the correct size and set to NaN
+        joint_positions.conservativeResize(joint_order.size());
+        joint_positions.setConstant(std::numeric_limits<double>::quiet_NaN()); // default
+       
+        // Initialize service client for the "/arm_controller/follow_joint_trajectory" service
+        joint_trajectory_client = nh.serviceClient<traj_serv_to_action::JointTraj>("/arm_controller/follow_joint_trajectory");
+    }
+    
+    void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg) {
+        if (msg->position.size() < joint_order.size()) {
+            ROS_ERROR_STREAM("Unexpected number of joints in the joint callback: "
+                             << msg->position.size());
+            return; 
+        }
+        
+        for (size_t i = 0; i < joint_order.size(); ++i) {
+            auto it = std::find(msg->name.begin(), msg->name.end(), joint_order[i]);
+            if (it != msg->name.end()) {
+                size_t index = std::distance(msg->name.begin(), it);
+                joint_positions(i) = msg->position[index];
+            } else {           
+                ROS_ERROR_STREAM("Joint " << joint_order[i] << " not found in received joint states.");
+            }
+        }
+    }
+
+    // Function to send the joint trajectory to the service
+    bool sendJointTrajectory(const trajectory_msgs::JointTrajectory& joint_traj) {
+        // Create a service request and populate it with the joint trajectory
+        traj_serv_to_action::JointTraj srv;
+        srv.request.joint_traj = joint_traj;
+
+        // Send the request and wait for a response
+        if (joint_trajectory_client.call(srv)) {
+            if (srv.response.success) {
+                ROS_INFO("Joint trajectory executed successfully.");
+                return true;
+            } else {
+                ROS_ERROR("Failed to execute joint trajectory.");
+                return false;
+            }
+        } else {
+            ROS_ERROR("Failed to call service follow_joint_trajectory");
+            return false;
+        }
+    }
+    
+private:
+    ros::NodeHandle nh;        
+    ros::Subscriber sub;       
+    ros::ServiceClient joint_trajectory_client;
+    
+    std::vector<std::string> joint_order = {
+        "arm0_shoulder_yaw",   
+        "arm0_shoulder_pitch", 
+        "arm0_elbow_pitch",    
+        "arm0_elbow_roll",     
+        "arm0_wrist_pitch",    
+        "arm0_wrist_roll"      
+    };  
+
+};
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "ap_planning");
     ros::NodeHandle nh;
+    // construct the joint_state subscriber
+    JointStateSubscriber js_sub(nh);
+
     ros::AsyncSpinner spinner(2);
     spinner.start();
 
@@ -183,16 +259,29 @@ int main(int argc, char **argv)
     // Define task
     TaskInfo task_info;
 
-    task_info.start_state =
-        (Eigen::VectorXd(6) << 0.01769, -1.27994, 2.13614, 0.04380, -0.84493, -0.07706).finished(); // VALVE TURN CASE 3
+    ros::Duration(5.0).sleep();
+
+    // Retrieve current state
+    if ((js_sub.joint_positions.array().isNaN()).any()) {
+            ROS_ERROR_STREAM("Unable to read joint states");
+	    return -1;
+    }
+    else {
+    
+    task_info.start_state = js_sub.joint_positions;
+        // (Eigen::VectorXd(6) << 0.01769, -1.27994, 2.13614, 0.04380, -0.84493, -0.07706).finished(); // VALVE TURN CASE 3
+    }
+
+
     task_info.screw_axis = Eigen::Vector3d(-1, 0, 0);
     task_info.screw_location = Eigen::Vector3d(0.617247, 0.0635829, 0.224735);
-    task_info.screw_goal = 3.0 / 4.0 * M_PI;
-    task_info.trajectory_density = 200;
+    // task_info.screw_goal = 3.0 / 4.0 * M_PI;
+    task_info.screw_goal = 1.0/4.0 * M_PI;
+    // task_info.trajectory_density = 200;
 
-    double waypoint_ang = task_info.screw_goal / task_info.trajectory_density;
-    std::string n_name = ros::this_node::getName();
-    nh.setParam(n_name + "/waypoint_ang", waypoint_ang);
+    // double waypoint_ang = task_info.screw_goal / task_info.trajectory_density;
+    // std::string n_name = ros::this_node::getName();
+    // nh.setParam(n_name + "/waypoint_ang", waypoint_ang);
 
     //--------------------------------------//
 
@@ -364,6 +453,8 @@ int main(int argc, char **argv)
                 auto joint_distance = calculate_joint_distance(result.joint_trajectory);
                 ROS_WARN("Joint distance: %.6f", joint_distance);
                 ROS_WARN("Number of waypoints: %zu", result.joint_trajectory.points.size());
+                ROS_WARN("Trying to execute trajectory on the robot");
+		if (!js_sub.sendJointTrajectory(result.joint_trajectory)){return -1;}
 
                 if (show_trajectories)
                 {
@@ -404,6 +495,8 @@ int main(int argc, char **argv)
                 auto joint_distance = calculate_joint_distance(sps_output.joint_trajectory);
                 ROS_WARN("Joint distance: %.6f", joint_distance);
                 ROS_WARN("Number of waypoints: %zu", sps_output.joint_trajectory.points.size());
+                ROS_WARN("Trying to execute trajectory on the robot");
+		if (!js_sub.sendJointTrajectory(sps_output.joint_trajectory)){return -1;}
                 if (show_trajectories)
                 {
                     show_trajectory(sps_output.joint_trajectory, visual_tools);

@@ -13,6 +13,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(catkin REQUIRED COMPONENTS
   ap_planning
   moveit_visual_tools
+  traj_serv_to_action
 )
 
 ###################################

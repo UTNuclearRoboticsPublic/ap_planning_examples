@@ -259,24 +259,39 @@ int main(int argc, char **argv)
     // Define task
     TaskInfo task_info;
 
-    ros::Duration(5.0).sleep();
-
     // Retrieve current state
-    if ((js_sub.joint_positions.array().isNaN()).any()) {
-            ROS_ERROR_STREAM("Unable to read joint states");
-	    return -1;
+    // if ((js_sub.joint_positions.array().isNaN()).any()) {
+    //         ROS_ERROR_STREAM("Unable to read joint states");
+	    // return -1;
+    // }
+    // else {
+    const double TIMEOUT_SEC = 10.0;
+auto start_time = std::chrono::steady_clock::now();
+
+while ((js_sub.joint_positions.array().isNaN()).any() || js_sub.joint_positions.isZero()) {
+    // Check elapsed time
+    auto elapsed_time = std::chrono::steady_clock::now() - start_time;
+    double elapsed_sec = std::chrono::duration<double>(elapsed_time).count();
+
+    if (elapsed_sec > TIMEOUT_SEC) {
+        ROS_FATAL_STREAM("Timeout reached while waiting for valid joint states.");
+        return -1;
     }
-    else {
-    
+
+    // Add a small delay to avoid high CPU usage
+    ros::Duration(0.1).sleep();
+}
+
     task_info.start_state = js_sub.joint_positions;
+            ROS_FATAL_STREAM("Read joint states: "<<js_sub.joint_positions);
         // (Eigen::VectorXd(6) << 0.01769, -1.27994, 2.13614, 0.04380, -0.84493, -0.07706).finished(); // VALVE TURN CASE 3
-    }
+    // }
 
 
-    task_info.screw_axis = Eigen::Vector3d(-1, 0, 0);
-    task_info.screw_location = Eigen::Vector3d(0.617247, 0.0635829, 0.224735);
+    // task_info.screw_axis = Eigen::Vector3d(-1, 0, 0);
+    // task_info.screw_location = Eigen::Vector3d(0.617247, 0.0635829, 0.224735);
     // task_info.screw_goal = 3.0 / 4.0 * M_PI;
-    task_info.screw_goal = 1.0/4.0 * M_PI;
+    // task_info.screw_goal = 1.0/4.0 * M_PI;
     // task_info.trajectory_density = 200;
 
     // double waypoint_ang = task_info.screw_goal / task_info.trajectory_density;
@@ -302,6 +317,13 @@ int main(int argc, char **argv)
     auto fk = kinematic_state->getGlobalLinkTransform("arm0_tool0");
     const Eigen::Vector3d fk_pos = fk.translation();
     const Eigen::Quaterniond fk_quat(fk.rotation());
+    //---------------------------------------------//
+    const double pelican_x = 0.29;
+    const Eigen::Vector3d pelican_case_hinge(pelican_x, 0, 0);
+    task_info.screw_axis = Eigen::Vector3d(0, 1, 0);
+    task_info.screw_location = fk_pos + pelican_case_hinge;
+    task_info.screw_goal = 1.0/6.0 * M_PI;
+    //---------------------------------------------//
 
     // Print results
     ROS_INFO_STREAM("fk_pos: " << fk_pos.transpose());
@@ -454,12 +476,12 @@ int main(int argc, char **argv)
                 ROS_WARN("Joint distance: %.6f", joint_distance);
                 ROS_WARN("Number of waypoints: %zu", result.joint_trajectory.points.size());
                 ROS_WARN("Trying to execute trajectory on the robot");
-		if (!js_sub.sendJointTrajectory(result.joint_trajectory)){return -1;}
 
                 if (show_trajectories)
                 {
                     show_trajectory(result.joint_trajectory, visual_tools);
                 }
+		if (!js_sub.sendJointTrajectory(result.joint_trajectory)){return -1;}
                 last_plan = result;
             }
             else
@@ -496,11 +518,11 @@ int main(int argc, char **argv)
                 ROS_WARN("Joint distance: %.6f", joint_distance);
                 ROS_WARN("Number of waypoints: %zu", sps_output.joint_trajectory.points.size());
                 ROS_WARN("Trying to execute trajectory on the robot");
-		if (!js_sub.sendJointTrajectory(sps_output.joint_trajectory)){return -1;}
                 if (show_trajectories)
                 {
                     show_trajectory(sps_output.joint_trajectory, visual_tools);
                 }
+		if (!js_sub.sendJointTrajectory(sps_output.joint_trajectory)){return -1;}
                 last_plan = sps_output;
             }
             else

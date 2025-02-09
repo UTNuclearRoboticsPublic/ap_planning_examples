@@ -14,6 +14,8 @@
 #include <queue>
 #include <thread>
 #include <utility>
+#include <fstream>
+#include<filesystem>
 
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
 #include <moveit/robot_model/robot_model.h>
@@ -322,7 +324,7 @@ while ((js_sub.joint_positions.array().isNaN()).any() || js_sub.joint_positions.
     const Eigen::Vector3d pelican_case_hinge(pelican_x, 0, 0);
     task_info.screw_axis = Eigen::Vector3d(0, 1, 0);
     task_info.screw_location = fk_pos + pelican_case_hinge;
-    task_info.screw_goal = 1.0/8.0 * M_PI;
+    task_info.screw_goal = 1.0/6.0 * M_PI;
     //---------------------------------------------//
 
     // Print results
@@ -427,7 +429,6 @@ while ((js_sub.joint_positions.array().isNaN()).any() || js_sub.joint_positions.
 
     // visual_tools.prompt("\n\n\nStow the left arm!\n\n\n");
 
-    bool plan_using_sps = false;
     // Plan each screw request
     while (planning_queue.size() > 0 && ros::ok())
     {
@@ -476,6 +477,40 @@ while ((js_sub.joint_positions.array().isNaN()).any() || js_sub.joint_positions.
                 auto joint_distance = calculate_joint_distance(result.joint_trajectory);
                 ROS_WARN("Joint distance: %.6f", joint_distance);
                 ROS_WARN("Number of waypoints: %zu", result.joint_trajectory.points.size());
+
+
+		// Write data to file before executing on robot
+		    // Path to xml
+		std::filesystem::path source_directory = std::filesystem::path(__FILE__).parent_path();
+		std::filesystem::path file_path = source_directory / "../data/other_info.txt";
+
+		std::ofstream file(file_path);
+
+	        if (file.is_open()) {
+	            file << "EE pose:\n";  // Write the info header
+
+	            // Write the position values
+	            file << "exp_ee_pose->header.frame_id = \"arm0_base_link\";\n";
+	            file << "exp_ee_pose->pose.position.x = " << fk_pos.x() << ";\n";
+	            file << "exp_ee_pose->pose.position.y = " << fk_pos.y() << ";\n";
+	            file << "exp_ee_pose->pose.position.z = " << fk_pos.z() << ";\n";
+
+	            // Write the orientation values
+	            file << "exp_ee_pose->pose.orientation.x = " << fk_quat.x() << ";\n";
+	            file << "exp_ee_pose->pose.orientation.y = " << fk_quat.y() << ";\n";
+	            file << "exp_ee_pose->pose.orientation.z = " << fk_quat.z() << ";\n";
+	            file << "exp_ee_pose->pose.orientation.w = " << fk_quat.w() << ";\n";
+
+	            // Write the planning time
+	            file << "Planning time = " << duration.count() << ";\n";
+
+	            file.close();  // Close the file
+	            ROS_INFO_STREAM("Data written to other_info.txt successfully!");  // Log success message
+	        } else {
+	            ROS_INFO_STREAM("Unable to write to file");  // Log failure
+		    return -1;
+	        }
+
                 ROS_WARN("Trying to execute trajectory on the robot");
 
                 if (show_trajectories)

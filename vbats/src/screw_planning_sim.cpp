@@ -321,10 +321,13 @@ while ((js_sub.joint_positions.array().isNaN()).any() || js_sub.joint_positions.
     const Eigen::Quaterniond fk_quat(fk.rotation());
     //---------------------------------------------//
     const double pelican_x = 0.29;
-    const Eigen::Vector3d pelican_case_hinge(pelican_x, 0, 0);
-    task_info.screw_axis = Eigen::Vector3d(0, 1, 0);
-    task_info.screw_location = fk_pos + pelican_case_hinge;
-    task_info.screw_goal = 1.0/6.0 * M_PI;
+    // const Eigen::Vector3d pelican_case_hinge(pelican_x, 0, 0);
+    // task_info.screw_axis = Eigen::Vector3d(0, -1, 0);
+    task_info.screw_axis = Eigen::Vector3d(1, 0, 0);
+    task_info.screw_location = fk_pos ;
+    // task_info.screw_location = fk_pos + pelican_case_hinge;
+    // task_info.screw_goal = 1.0/4.5*M_PI;
+    task_info.screw_goal = 0.2;
     //---------------------------------------------//
 
     // Print results
@@ -409,6 +412,7 @@ while ((js_sub.joint_positions.array().isNaN()).any() || js_sub.joint_positions.
     screw1.screw_msg.axis.x = task_info.screw_axis[0];
     screw1.screw_msg.axis.y = task_info.screw_axis[1];
     screw1.screw_msg.axis.z = task_info.screw_axis[2];
+    screw1.screw_msg.is_pure_translation=true;
     single_request.screw_path.push_back(screw1);
     planning_queue.push(single_request);
 
@@ -487,6 +491,13 @@ while ((js_sub.joint_positions.array().isNaN()).any() || js_sub.joint_positions.
 		std::ofstream file(file_path);
 
 	        if (file.is_open()) {
+		    // Set high precision for ROS time
+		    std::streamsize original_precision = file.precision();
+		    file << std::fixed << std::setprecision(9);
+		    ros::Time current_time = ros::Time::now();
+		    file << "ROS Time : " << current_time.toSec() << " seconds\n";
+		    file << std::defaultfloat << std::setprecision(original_precision);//reset to default precision
+
 	            file << "EE pose:\n";  // Write the info header
 
 	            // Write the position values
@@ -502,8 +513,8 @@ while ((js_sub.joint_positions.array().isNaN()).any() || js_sub.joint_positions.
 	            file << "exp_ee_pose->pose.orientation.w = " << fk_quat.w() << ";\n";
 
 		    // Write screw info
-	            file << "Screw axis = " << task_info.screw_axis << ";\n";
-	            file << "Screw location = " << task_info.screw_location << ";\n";
+	            file << "Screw axis = " << task_info.screw_axis.transpose() << ";\n";
+	            file << "Screw location = " << task_info.screw_location.transpose() << ";\n";
 	            file << "Screw goal = " << task_info.screw_goal << ";\n";
 
 	            // Write other planning results

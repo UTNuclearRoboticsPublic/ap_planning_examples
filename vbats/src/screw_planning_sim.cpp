@@ -242,6 +242,56 @@ private:
 
 };
 
+bool write_data_to_file(const std::string& planner_type, const Eigen::Vector3d& fk_pos, const Eigen::Quaterniond& fk_quat, const TaskInfo& task_info, const std::chrono::microseconds& duration, double joint_distance){
+
+		// Write data to file before executing on robot
+		    // Path to xml
+		std::filesystem::path source_directory = std::filesystem::path(__FILE__).parent_path();
+		std::filesystem::path file_path = source_directory / "../data/other_info.txt";
+
+		std::ofstream file(file_path);
+
+	        if (file.is_open()) {
+		    file << "Planner type: " << planner_type << " \n";
+		    // Set high precision for ROS time
+		    std::streamsize original_precision = file.precision();
+		    file << std::fixed << std::setprecision(9);
+		    ros::Time current_time = ros::Time::now();
+		    file << "ROS Time : " << current_time.toSec() << " seconds\n";
+		    file << std::defaultfloat << std::setprecision(original_precision);//reset to default precision
+
+	            file << "EE pose:\n";  // Write the info header
+
+	            // Write the position values
+	            file << "exp_ee_pose->header.frame_id = \"arm0_base_link\";\n";
+	            file << "exp_ee_pose->pose.position.x = " << fk_pos.x() << ";\n";
+	            file << "exp_ee_pose->pose.position.y = " << fk_pos.y() << ";\n";
+	            file << "exp_ee_pose->pose.position.z = " << fk_pos.z() << ";\n";
+
+	            // Write the orientation values
+	            file << "exp_ee_pose->pose.orientation.x = " << fk_quat.x() << ";\n";
+	            file << "exp_ee_pose->pose.orientation.y = " << fk_quat.y() << ";\n";
+	            file << "exp_ee_pose->pose.orientation.z = " << fk_quat.z() << ";\n";
+	            file << "exp_ee_pose->pose.orientation.w = " << fk_quat.w() << ";\n";
+
+		    // Write screw info
+	            file << "Screw axis = " << task_info.screw_axis.transpose() << ";\n";
+	            file << "Screw location = " << task_info.screw_location.transpose() << ";\n";
+	            file << "Screw goal = " << task_info.screw_goal << ";\n";
+
+	            // Write other planning results
+	            file << "Planning time(us) = " << duration.count() << ";\n";
+	            file << "Joint distance = " << joint_distance << ";\n";
+
+	            file.close();  // Close the file
+	            ROS_INFO_STREAM("Data written to other_info.txt successfully!");  // Log success message
+	        } else {
+	            ROS_INFO_STREAM("Unable to write to file");  // Log failure
+		    return false;
+	        }
+return true;
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "ap_planning");
@@ -257,60 +307,61 @@ int main(int argc, char **argv)
         ros::console::notifyLoggerLevelsChanged();
     }
 
-    //--------------------------------------//
     // Define task
     TaskInfo task_info;
 
-    // Retrieve current state
-    // if ((js_sub.joint_positions.array().isNaN()).any()) {
-    //         ROS_ERROR_STREAM("Unable to read joint states");
-	    // return -1;
-    // }
-    // else {
-    const double TIMEOUT_SEC = 10.0;
-auto start_time = std::chrono::steady_clock::now();
-
-while ((js_sub.joint_positions.array().isNaN()).any() || js_sub.joint_positions.isZero()) {
-    // Check elapsed time
-    auto elapsed_time = std::chrono::steady_clock::now() - start_time;
-    double elapsed_sec = std::chrono::duration<double>(elapsed_time).count();
-
-    if (elapsed_sec > TIMEOUT_SEC) {
-        ROS_FATAL_STREAM("Timeout reached while waiting for valid joint states.");
-        return -1;
-    }
-
-    // Add a small delay to avoid high CPU usage
-    ros::Duration(0.1).sleep();
-}
-
-    task_info.start_state = js_sub.joint_positions;
-            ROS_FATAL_STREAM("Read joint states: "<<js_sub.joint_positions);
-        // (Eigen::VectorXd(6) << 0.01769, -1.27994, 2.13614, 0.04380, -0.84493, -0.07706).finished(); // VALVE TURN CASE 3
-    // }
-
-
-    // task_info.screw_axis = Eigen::Vector3d(-1, 0, 0);
-    // task_info.screw_location = Eigen::Vector3d(0.617247, 0.0635829, 0.224735);
-    // task_info.screw_goal = 3.0 / 4.0 * M_PI;
-    // task_info.screw_goal = 1.0/4.0 * M_PI;
-    // task_info.trajectory_density = 200;
-
-    // double waypoint_ang = task_info.screw_goal / task_info.trajectory_density;
-    // std::string n_name = ros::this_node::getName();
-    // nh.setParam(n_name + "/waypoint_ang", waypoint_ang);
-
     //--------------------------------------//
+    // const double TIMEOUT_SEC = 10.0;
+    // auto start_time = std::chrono::steady_clock::now();
+    
+    // while ((js_sub.joint_positions.array().isNaN()).any() || js_sub.joint_positions.isZero()) {
+    //     // Check elapsed time
+    //     auto elapsed_time = std::chrono::steady_clock::now() - start_time;
+    //     double elapsed_sec = std::chrono::duration<double>(elapsed_time).count();
+    
+    //     if (elapsed_sec > TIMEOUT_SEC) {
+    //         ROS_FATAL_STREAM("Timeout reached while waiting for valid joint states.");
+    //         return -1;
+    //     }
+    
+    //     // Add a small delay to avoid high CPU usage
+    //     ros::Duration(0.1).sleep();
+    // }
+
+    // task_info.start_state = js_sub.joint_positions;
+    //         ROS_FATAL_STREAM("Read joint states: "<<js_sub.joint_positions);
+    //--------------------------------------//
+    // task_info.start_state = (Eigen::VectorXd(6) << 0.01769, -1.27994, 2.13614, 0.04380, -0.84493, -0.07706).finished(); // VALVE TURN CASE 3
+    // task_info.start_state = (Eigen::VectorXd(6)<<-0.00415325, -1.3191, 2.291, 0.067544, -1.8325, -0.0605698).finished(); // NAMASTE
+
+    //---------------------------------------------//
+    // // Task Info -- PELICAN 1
+    // task_info.start_state = (Eigen::VectorXd(6)<<-0.30301,0.05926,1.30502,-0.41824,-1.04204,0.09252).finished(); // NAMASTE
+    // task_info.screw_axis = Eigen::Vector3d(0 ,1 ,0);
+    // task_info.screw_location = Eigen::Vector3d(0.945425 ,-0.133055, -0.464318); // We get location from FK
+    // task_info.screw_goal = 0.628319; // Fails
+    // task_info.screw_goal = 0.628319 *0.81; // MAX
+    // // screw type for this task is rotation and set by default, ensure screw_msg member is_pure_translation is not set down below while planning
+    //---------------------------------------------//
+    // // Task Info -- PELICAN 2
+    // task_info.start_state = (Eigen::VectorXd(6)<<-0.10534,0.30302,1.23042,-0.08751,-1.45407,0.00974).finished(); // NAMASTE
+    // task_info.screw_axis = Eigen::Vector3d(0 ,1 ,0);
+    // task_info.screw_location = Eigen::Vector3d(0.895717 ,-0.0469712  ,-0.516762); // We get location from FK
+    // // task_info.screw_goal = 0.785398;
+    // task_info.screw_goal = M_PI/2.0 * 0.53; //MAX
+    //---------------------------------------------//
+    // Task Info -- PELICAN 3
+    task_info.start_state = (Eigen::VectorXd(6)<<-0.05821,0.30447,1.13644,-0.10949,-1.35613,-0.00345).finished(); // NAMASTE
+    task_info.screw_axis = Eigen::Vector3d(0 ,1 ,0);
+    task_info.screw_location = Eigen::Vector3d(0.933395 ,-0.0165794  ,-0.508373); // We get location from FK
+    // task_info.screw_goal = 0.837758;
+    task_info.screw_goal =0.837758 *0.9; //MAX
+    //---------------------------------------------//
 
     robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
     const moveit::core::RobotModelPtr &kinematic_model = robot_model_loader.getModel();
 
     moveit::core::RobotStatePtr kinematic_state(new moveit::core::RobotState(kinematic_model));
-    // std::vector<double> default_joint_state{-0.00015592575073242188, -0.8980185389518738,
-    //                                         1.8094338178634644,      0.000377655029296875,
-    //                                         -0.8991076946258545,     0.0015475749969482422}; // READY
-    // std::vector<double> default_joint_state = {-0.00415325, -1.3191, 2.291, 0.067544, -1.8325, -0.0605698}; //
-    // NAMASTE
     std::vector<double> default_joint_state(task_info.start_state.data(),
                                             task_info.start_state.data() + task_info.start_state.size());
 
@@ -319,21 +370,6 @@ while ((js_sub.joint_positions.array().isNaN()).any() || js_sub.joint_positions.
     auto fk = kinematic_state->getGlobalLinkTransform("arm0_tool0");
     const Eigen::Vector3d fk_pos = fk.translation();
     const Eigen::Quaterniond fk_quat(fk.rotation());
-    //---------------------------------------------//
-    const double pelican_x = 0.29;
-    // const Eigen::Vector3d pelican_case_hinge(pelican_x, 0, 0);
-    // task_info.screw_axis = Eigen::Vector3d(0, -1, 0);
-    task_info.screw_axis = Eigen::Vector3d(1, 0, 0);
-    task_info.screw_location = fk_pos ;
-    // task_info.screw_location = fk_pos + pelican_case_hinge;
-    // task_info.screw_goal = 1.0/4.5*M_PI;
-    task_info.screw_goal = 0.2;
-    //---------------------------------------------//
-
-    // Print results
-    ROS_INFO_STREAM("fk_pos: " << fk_pos.transpose());
-    ROS_INFO_STREAM("fk_quat: [x: " << fk_quat.x() << ", y: " << fk_quat.y() << ", z: " << fk_quat.z()
-                                    << ", w: " << fk_quat.w() << "]");
 
     int num_sample, num_sps;
     nh.param<int>(ros::this_node::getName() + "/num_sampling", num_sample, 2);
@@ -412,7 +448,7 @@ while ((js_sub.joint_positions.array().isNaN()).any() || js_sub.joint_positions.
     screw1.screw_msg.axis.x = task_info.screw_axis[0];
     screw1.screw_msg.axis.y = task_info.screw_axis[1];
     screw1.screw_msg.axis.z = task_info.screw_axis[2];
-    screw1.screw_msg.is_pure_translation=true;
+    // screw1.screw_msg.is_pure_translation=true;
     single_request.screw_path.push_back(screw1);
     planning_queue.push(single_request);
 
@@ -463,143 +499,108 @@ while ((js_sub.joint_positions.array().isNaN()).any() || js_sub.joint_positions.
 
         show_multi_screw(req, visual_tools);
 
-        for (size_t i = 0; i < num_sample; ++i)
-        {
-            std::cout << "Starting i = " << i << "\n";
-            ap_planning::APPlanningResponse result;
-            auto start = std::chrono::high_resolution_clock::now();
-            ap_planning::Result success = ap_planner.plan(req, result);
-            auto stop = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-            if (success == ap_planning::SUCCESS)
-            {
-                std::cout << "\n\n\nDSS planning: Success!!\n\n";
-                std::cout << "Trajectory is: " << result.percentage_complete * 100
-                          << "% complete, and has length: " << result.path_length
-                          << ", is valid: " << result.trajectory_is_valid << "\n";
-                ROS_WARN("Planning time: %.6f seconds", duration.count() / 1e6);
-                auto joint_distance = calculate_joint_distance(result.joint_trajectory);
-                ROS_WARN("Joint distance: %.6f", joint_distance);
-                ROS_WARN("Number of waypoints: %zu", result.joint_trajectory.points.size());
+        // for (size_t i = 0; i < num_sample; ++i)
+        // {
+        //     std::cout << "Starting i = " << i << "\n";
+        //     ap_planning::APPlanningResponse result;
+        //     auto start = std::chrono::high_resolution_clock::now();
+        //     ap_planning::Result success = ap_planner.plan(req, result);
+        //     auto stop = std::chrono::high_resolution_clock::now();
+        //     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+        //     if (success == ap_planning::SUCCESS)
+        //     {
+        //         std::cout << "\n\n\nDSS planning: Success!!\n\n";
+        //         std::cout << "Trajectory is: " << result.percentage_complete * 100
+        //                   << "% complete, and has length: " << result.path_length
+        //                   << ", is valid: " << result.trajectory_is_valid << "\n";
+        //         ROS_WARN("Planning time: %.6f seconds", duration.count() / 1e6);
+        //         auto joint_distance = calculate_joint_distance(result.joint_trajectory);
+        //         ROS_WARN("Joint distance: %.6f", joint_distance);
+        //         ROS_WARN("Number of waypoints: %zu", result.joint_trajectory.points.size());
 
+		// // Write data to file
+		// const std::string planner_type ="DSS";
+        //         if (!write_data_to_file(planner_type, fk_pos, fk_quat, task_info, duration, joint_distance)){
+		    // return -1;
+	        // }
 
-		// Write data to file before executing on robot
-		    // Path to xml
-		std::filesystem::path source_directory = std::filesystem::path(__FILE__).parent_path();
-		std::filesystem::path file_path = source_directory / "../data/other_info.txt";
+        //         ROS_WARN("Trying to execute trajectory on the robot");
 
-		std::ofstream file(file_path);
+        //         if (show_trajectories)
+        //         {
+        //             show_trajectory(result.joint_trajectory, visual_tools);
+        //         }
+		// if (!js_sub.sendJointTrajectory(result.joint_trajectory)){return -1;}
+        //         last_plan = result;
+        //     }
+        //     else
+        //     {
+        //         std::cout << "\n\n\nDSS planning: Fail (" << ap_planning::toStr(success) << ")\n\n";
+        //     }
 
-	        if (file.is_open()) {
-		    // Set high precision for ROS time
-		    std::streamsize original_precision = file.precision();
-		    file << std::fixed << std::setprecision(9);
-		    ros::Time current_time = ros::Time::now();
-		    file << "ROS Time : " << current_time.toSec() << " seconds\n";
-		    file << std::defaultfloat << std::setprecision(original_precision);//reset to default precision
+        //     ss_dssp << sample << ", DSS, " << ap_planning::toStr(success) << ", " << result.percentage_complete * 100
+        //             << ", " << duration.count() << ", " << result.path_length << ",\n";
+        // }
 
-	            file << "EE pose:\n";  // Write the info header
-
-	            // Write the position values
-	            file << "exp_ee_pose->header.frame_id = \"arm0_base_link\";\n";
-	            file << "exp_ee_pose->pose.position.x = " << fk_pos.x() << ";\n";
-	            file << "exp_ee_pose->pose.position.y = " << fk_pos.y() << ";\n";
-	            file << "exp_ee_pose->pose.position.z = " << fk_pos.z() << ";\n";
-
-	            // Write the orientation values
-	            file << "exp_ee_pose->pose.orientation.x = " << fk_quat.x() << ";\n";
-	            file << "exp_ee_pose->pose.orientation.y = " << fk_quat.y() << ";\n";
-	            file << "exp_ee_pose->pose.orientation.z = " << fk_quat.z() << ";\n";
-	            file << "exp_ee_pose->pose.orientation.w = " << fk_quat.w() << ";\n";
-
-		    // Write screw info
-	            file << "Screw axis = " << task_info.screw_axis.transpose() << ";\n";
-	            file << "Screw location = " << task_info.screw_location.transpose() << ";\n";
-	            file << "Screw goal = " << task_info.screw_goal << ";\n";
-
-	            // Write other planning results
-	            file << "Planning time(us) = " << duration.count() << ";\n";
-	            file << "Joint distance = " << joint_distance << ";\n";
-
-	            file.close();  // Close the file
-	            ROS_INFO_STREAM("Data written to other_info.txt successfully!");  // Log success message
-	        } else {
-	            ROS_INFO_STREAM("Unable to write to file");  // Log failure
-		    return -1;
-	        }
-
-                ROS_WARN("Trying to execute trajectory on the robot");
-
-                if (show_trajectories)
-                {
-                    show_trajectory(result.joint_trajectory, visual_tools);
-                }
-		if (!js_sub.sendJointTrajectory(result.joint_trajectory)){return -1;}
-                last_plan = result;
-            }
-            else
-            {
-                std::cout << "\n\n\nDSS planning: Fail (" << ap_planning::toStr(success) << ")\n\n";
-            }
-
-            ss_dssp << sample << ", DSS, " << ap_planning::toStr(success) << ", " << result.percentage_complete * 100
-                    << ", " << duration.count() << ", " << result.path_length << ",\n";
-        }
-
-        // // Now move to SPS planner
+        // Now move to SPS planner
         // if (show_trajectories)
         // {
         //     visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to plan again using "
         //                         "SPS planner");
         // }
 
-        // // Try planning
-        // for (size_t i = 0; i < num_sps; ++i)
-        // {
-        //     ap_planning::APPlanningResponse sps_output;
-        //     auto start = std::chrono::high_resolution_clock::now();
-        //     auto sps_res = sequential_step_planner.plan(req, sps_output);
-        //     auto stop = std::chrono::high_resolution_clock::now();
-        //     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        //     if (sps_res == ap_planning::SUCCESS)
-        //     {
-        //         std::cout << "\n\n\nSPS planning: Success!!\n\n";
-        //         std::cout << "Trajectory is: " << sps_output.percentage_complete * 100
-        //                   << "% complete, and has length: " << sps_output.path_length << "\n";
-        //         ROS_WARN("Planning time: %.6f seconds", duration.count() / 1e6);
-        //         auto joint_distance = calculate_joint_distance(sps_output.joint_trajectory);
-        //         ROS_WARN("Joint distance: %.6f", joint_distance);
-        //         ROS_WARN("Number of waypoints: %zu", sps_output.joint_trajectory.points.size());
-        //         ROS_WARN("Trying to execute trajectory on the robot");
-        //         if (show_trajectories)
-        //         {
-        //             show_trajectory(sps_output.joint_trajectory, visual_tools);
-        //         }
+        // Try planning
+        for (size_t i = 0; i < num_sps; ++i)
+        {
+            ap_planning::APPlanningResponse sps_output;
+            auto start = std::chrono::high_resolution_clock::now();
+            auto sps_res = sequential_step_planner.plan(req, sps_output);
+            auto stop = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+            if (sps_res == ap_planning::SUCCESS)
+            {
+                std::cout << "\n\n\nSPS planning: Success!!\n\n";
+                std::cout << "Trajectory is: " << sps_output.percentage_complete * 100
+                          << "% complete, and has length: " << sps_output.path_length << "\n";
+                ROS_WARN("Planning time: %.6f seconds", duration.count() / 1e6);
+                auto joint_distance = calculate_joint_distance(sps_output.joint_trajectory);
+                ROS_WARN("Joint distance: %.6f", joint_distance);
+                ROS_WARN("Number of waypoints: %zu", sps_output.joint_trajectory.points.size());
+		// Write data to file
+		const std::string planner_type ="SPS";
+                if (!write_data_to_file(planner_type, fk_pos, fk_quat, task_info, duration, joint_distance)){
+		    return -1;
+	        }
+                ROS_WARN("Trying to execute trajectory on the robot");
+                if (show_trajectories)
+                {
+                    show_trajectory(sps_output.joint_trajectory, visual_tools);
+                }
 		// if (!js_sub.sendJointTrajectory(sps_output.joint_trajectory)){return -1;}
-        //         last_plan = sps_output;
-        //     }
-        //     else
-        //     {
-        //         std::cout << "\n\n\nSPS planning: Fail (" << ap_planning::toStr(sps_res) << ")\n\n";
-        //         std::cout << "Trajectory is: " << sps_output.percentage_complete * 100
-        //                   << "% complete, and has length: " << sps_output.path_length << "\n";
-        //     }
-        //     ss_sps << sample << ", SPS, " << ap_planning::toStr(sps_res) << ", " << sps_output.percentage_complete * 100
-        //            << ", " << duration.count() << ",\n";
+                last_plan = sps_output;
+            }
+            else
+            {
+                std::cout << "\n\n\nSPS planning: Fail (" << ap_planning::toStr(sps_res) << ")\n\n";
+                std::cout << "Trajectory is: " << sps_output.percentage_complete * 100
+                          << "% complete, and has length: " << sps_output.path_length << "\n";
+            }
+            ss_sps << sample << ", SPS, " << ap_planning::toStr(sps_res) << ", " << sps_output.percentage_complete * 100
+                   << ", " << duration.count() << ",\n";
 
-        //     // if (sps_res == ap_planning::NO_IK_SOLUTION) {
-        //     //   sequential_step_planner = ap_planning::SequentialStepPlanner(nh);
-        //     //   sequential_step_planner.initialize();
-        //     // }
-        // }
+            // if (sps_res == ap_planning::NO_IK_SOLUTION) {
+            //   sequential_step_planner = ap_planning::SequentialStepPlanner(nh);
+            //   sequential_step_planner.initialize();
+            // }
+        }
     }
 
     ROS_ERROR_STREAM("\n\nAll done with trajectories\n\n");
 
     ss_dssp << "End output\n";
     // ss_sps << "End output\n";
-    std::cout << ss_dssp.str();
-    // std::cout << ss_sps.str();
+    // std::cout << ss_dssp.str();
+    std::cout << ss_sps.str();
 
     ros::shutdown();
     return 0;

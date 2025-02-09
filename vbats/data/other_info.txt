@@ -1,0 +1,10 @@
+EE pose:
+exp_ee_pose->header.frame_id = "arm0_base_link";
+exp_ee_pose->pose.position.x = 0.773785;
+exp_ee_pose->pose.position.y = -0.0888979;
+exp_ee_pose->pose.position.z = -0.475505;
+exp_ee_pose->pose.orientation.x = -0.0132269;
+exp_ee_pose->pose.orientation.y = 0.179562;
+exp_ee_pose->pose.orientation.z = -0.00351094;
+exp_ee_pose->pose.orientation.w = 0.983652;
+Planning time = 3299288;

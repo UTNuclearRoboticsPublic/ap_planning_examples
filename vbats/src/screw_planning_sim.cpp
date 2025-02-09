@@ -501,8 +501,14 @@ while ((js_sub.joint_positions.array().isNaN()).any() || js_sub.joint_positions.
 	            file << "exp_ee_pose->pose.orientation.z = " << fk_quat.z() << ";\n";
 	            file << "exp_ee_pose->pose.orientation.w = " << fk_quat.w() << ";\n";
 
-	            // Write the planning time
-	            file << "Planning time = " << duration.count() << ";\n";
+		    // Write screw info
+	            file << "Screw axis = " << task_info.screw_axis << ";\n";
+	            file << "Screw location = " << task_info.screw_location << ";\n";
+	            file << "Screw goal = " << task_info.screw_goal << ";\n";
+
+	            // Write other planning results
+	            file << "Planning time(us) = " << duration.count() << ";\n";
+	            file << "Joint distance = " << joint_distance << ";\n";
 
 	            file.close();  // Close the file
 	            ROS_INFO_STREAM("Data written to other_info.txt successfully!");  // Log success message

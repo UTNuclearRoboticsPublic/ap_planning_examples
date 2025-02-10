@@ -311,25 +311,25 @@ int main(int argc, char **argv)
     TaskInfo task_info;
 
     //--------------------------------------//
-    // const double TIMEOUT_SEC = 10.0;
-    // auto start_time = std::chrono::steady_clock::now();
+    const double TIMEOUT_SEC = 10.0;
+    auto start_time = std::chrono::steady_clock::now();
     
-    // while ((js_sub.joint_positions.array().isNaN()).any() || js_sub.joint_positions.isZero()) {
-    //     // Check elapsed time
-    //     auto elapsed_time = std::chrono::steady_clock::now() - start_time;
-    //     double elapsed_sec = std::chrono::duration<double>(elapsed_time).count();
+    while ((js_sub.joint_positions.array().isNaN()).any() || js_sub.joint_positions.isZero()) {
+        // Check elapsed time
+        auto elapsed_time = std::chrono::steady_clock::now() - start_time;
+        double elapsed_sec = std::chrono::duration<double>(elapsed_time).count();
     
-    //     if (elapsed_sec > TIMEOUT_SEC) {
-    //         ROS_FATAL_STREAM("Timeout reached while waiting for valid joint states.");
-    //         return -1;
-    //     }
+        if (elapsed_sec > TIMEOUT_SEC) {
+            ROS_FATAL_STREAM("Timeout reached while waiting for valid joint states.");
+            return -1;
+        }
     
-    //     // Add a small delay to avoid high CPU usage
-    //     ros::Duration(0.1).sleep();
-    // }
+        // Add a small delay to avoid high CPU usage
+        ros::Duration(0.1).sleep();
+    }
 
-    // task_info.start_state = js_sub.joint_positions;
-    //         ROS_FATAL_STREAM("Read joint states: "<<js_sub.joint_positions);
+    task_info.start_state = js_sub.joint_positions;
+            ROS_FATAL_STREAM("Read joint states: "<<js_sub.joint_positions);
     //--------------------------------------//
     // task_info.start_state = (Eigen::VectorXd(6) << 0.01769, -1.27994, 2.13614, 0.04380, -0.84493, -0.07706).finished(); // VALVE TURN CASE 3
     // task_info.start_state = (Eigen::VectorXd(6)<<-0.00415325, -1.3191, 2.291, 0.067544, -1.8325, -0.0605698).finished(); // NAMASTE
@@ -350,12 +350,20 @@ int main(int argc, char **argv)
     // // task_info.screw_goal = 0.785398;
     // task_info.screw_goal = M_PI/2.0 * 0.53; //MAX
     //---------------------------------------------//
-    // Task Info -- PELICAN 3
-    task_info.start_state = (Eigen::VectorXd(6)<<-0.05821,0.30447,1.13644,-0.10949,-1.35613,-0.00345).finished(); // NAMASTE
-    task_info.screw_axis = Eigen::Vector3d(0 ,1 ,0);
-    task_info.screw_location = Eigen::Vector3d(0.933395 ,-0.0165794  ,-0.508373); // We get location from FK
-    // task_info.screw_goal = 0.837758;
-    task_info.screw_goal =0.837758 *0.9; //MAX
+    // // Task Info -- PELICAN 3
+    // task_info.start_state = (Eigen::VectorXd(6)<<-0.05821,0.30447,1.13644,-0.10949,-1.35613,-0.00345).finished(); // NAMASTE
+    // task_info.screw_axis = Eigen::Vector3d(0 ,1 ,0);
+    // task_info.screw_location = Eigen::Vector3d(0.933395 ,-0.0165794  ,-0.508373); // We get location from FK
+    // // task_info.screw_goal = 0.837758;
+    // task_info.screw_goal =0.837758 *0.9; //MAX
+    //---------------------------------------------//
+    // Task Info -- NUT FASTENING 1
+    // task_info.start_state = (Eigen::VectorXd(6)<<).finished(); // NAMASTE
+    task_info.screw_axis = Eigen::Vector3d(-1.0,0.0,0.0);
+    // task_info.screw_location = Eigen::Vector3d(); // We get location from FK
+    // task_info.screw_goal = ;
+    task_info.pitch = 0.01;
+    task_info.screw_goal = M_PI/3.0; //MAX
     //---------------------------------------------//
 
     robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
@@ -370,6 +378,9 @@ int main(int argc, char **argv)
     auto fk = kinematic_state->getGlobalLinkTransform("arm0_tool0");
     const Eigen::Vector3d fk_pos = fk.translation();
     const Eigen::Quaterniond fk_quat(fk.rotation());
+    //---------------------------------------------//
+    task_info.screw_location = fk_pos - Eigen::Vector3d(0,0.08,0); // We get location from FK
+    //---------------------------------------------//
 
     int num_sample, num_sps;
     nh.param<int>(ros::this_node::getName() + "/num_sampling", num_sample, 2);
@@ -448,6 +459,7 @@ int main(int argc, char **argv)
     screw1.screw_msg.axis.x = task_info.screw_axis[0];
     screw1.screw_msg.axis.y = task_info.screw_axis[1];
     screw1.screw_msg.axis.z = task_info.screw_axis[2];
+    screw1.screw_msg.pitch = task_info.pitch;
     // screw1.screw_msg.is_pure_translation=true;
     single_request.screw_path.push_back(screw1);
     planning_queue.push(single_request);
@@ -499,100 +511,100 @@ int main(int argc, char **argv)
 
         show_multi_screw(req, visual_tools);
 
-        // for (size_t i = 0; i < num_sample; ++i)
-        // {
-        //     std::cout << "Starting i = " << i << "\n";
-        //     ap_planning::APPlanningResponse result;
-        //     auto start = std::chrono::high_resolution_clock::now();
-        //     ap_planning::Result success = ap_planner.plan(req, result);
-        //     auto stop = std::chrono::high_resolution_clock::now();
-        //     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        //     if (success == ap_planning::SUCCESS)
-        //     {
-        //         std::cout << "\n\n\nDSS planning: Success!!\n\n";
-        //         std::cout << "Trajectory is: " << result.percentage_complete * 100
-        //                   << "% complete, and has length: " << result.path_length
-        //                   << ", is valid: " << result.trajectory_is_valid << "\n";
-        //         ROS_WARN("Planning time: %.6f seconds", duration.count() / 1e6);
-        //         auto joint_distance = calculate_joint_distance(result.joint_trajectory);
-        //         ROS_WARN("Joint distance: %.6f", joint_distance);
-        //         ROS_WARN("Number of waypoints: %zu", result.joint_trajectory.points.size());
+        for (size_t i = 0; i < num_sample; ++i)
+        {
+            std::cout << "Starting i = " << i << "\n";
+            ap_planning::APPlanningResponse result;
+            auto start = std::chrono::high_resolution_clock::now();
+            ap_planning::Result success = ap_planner.plan(req, result);
+            auto stop = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+            if (success == ap_planning::SUCCESS)
+            {
+                std::cout << "\n\n\nDSS planning: Success!!\n\n";
+                std::cout << "Trajectory is: " << result.percentage_complete * 100
+                          << "% complete, and has length: " << result.path_length
+                          << ", is valid: " << result.trajectory_is_valid << "\n";
+                ROS_WARN("Planning time: %.6f seconds", duration.count() / 1e6);
+                auto joint_distance = calculate_joint_distance(result.joint_trajectory);
+                ROS_WARN("Joint distance: %.6f", joint_distance);
+                ROS_WARN("Number of waypoints: %zu", result.joint_trajectory.points.size());
 
-		// // Write data to file
-		// const std::string planner_type ="DSS";
-        //         if (!write_data_to_file(planner_type, fk_pos, fk_quat, task_info, duration, joint_distance)){
-		    // return -1;
-	        // }
+		// Write data to file
+		const std::string planner_type ="DSS";
+                if (!write_data_to_file(planner_type, fk_pos, fk_quat, task_info, duration, joint_distance)){
+		    return -1;
+	        }
 
-        //         ROS_WARN("Trying to execute trajectory on the robot");
+                ROS_WARN("Trying to execute trajectory on the robot");
 
-        //         if (show_trajectories)
-        //         {
-        //             show_trajectory(result.joint_trajectory, visual_tools);
-        //         }
-		// if (!js_sub.sendJointTrajectory(result.joint_trajectory)){return -1;}
-        //         last_plan = result;
-        //     }
-        //     else
-        //     {
-        //         std::cout << "\n\n\nDSS planning: Fail (" << ap_planning::toStr(success) << ")\n\n";
-        //     }
+                if (show_trajectories)
+                {
+                    show_trajectory(result.joint_trajectory, visual_tools);
+                }
+		if (!js_sub.sendJointTrajectory(result.joint_trajectory)){return -1;}
+                last_plan = result;
+            }
+            else
+            {
+                std::cout << "\n\n\nDSS planning: Fail (" << ap_planning::toStr(success) << ")\n\n";
+            }
 
-        //     ss_dssp << sample << ", DSS, " << ap_planning::toStr(success) << ", " << result.percentage_complete * 100
-        //             << ", " << duration.count() << ", " << result.path_length << ",\n";
-        // }
+            ss_dssp << sample << ", DSS, " << ap_planning::toStr(success) << ", " << result.percentage_complete * 100
+                    << ", " << duration.count() << ", " << result.path_length << ",\n";
+        }
 
-        // Now move to SPS planner
+        // // Now move to SPS planner
         // if (show_trajectories)
         // {
         //     visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to plan again using "
         //                         "SPS planner");
         // }
 
-        // Try planning
-        for (size_t i = 0; i < num_sps; ++i)
-        {
-            ap_planning::APPlanningResponse sps_output;
-            auto start = std::chrono::high_resolution_clock::now();
-            auto sps_res = sequential_step_planner.plan(req, sps_output);
-            auto stop = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-            if (sps_res == ap_planning::SUCCESS)
-            {
-                std::cout << "\n\n\nSPS planning: Success!!\n\n";
-                std::cout << "Trajectory is: " << sps_output.percentage_complete * 100
-                          << "% complete, and has length: " << sps_output.path_length << "\n";
-                ROS_WARN("Planning time: %.6f seconds", duration.count() / 1e6);
-                auto joint_distance = calculate_joint_distance(sps_output.joint_trajectory);
-                ROS_WARN("Joint distance: %.6f", joint_distance);
-                ROS_WARN("Number of waypoints: %zu", sps_output.joint_trajectory.points.size());
-		// Write data to file
-		const std::string planner_type ="SPS";
-                if (!write_data_to_file(planner_type, fk_pos, fk_quat, task_info, duration, joint_distance)){
-		    return -1;
-	        }
-                ROS_WARN("Trying to execute trajectory on the robot");
-                if (show_trajectories)
-                {
-                    show_trajectory(sps_output.joint_trajectory, visual_tools);
-                }
-		// if (!js_sub.sendJointTrajectory(sps_output.joint_trajectory)){return -1;}
-                last_plan = sps_output;
-            }
-            else
-            {
-                std::cout << "\n\n\nSPS planning: Fail (" << ap_planning::toStr(sps_res) << ")\n\n";
-                std::cout << "Trajectory is: " << sps_output.percentage_complete * 100
-                          << "% complete, and has length: " << sps_output.path_length << "\n";
-            }
-            ss_sps << sample << ", SPS, " << ap_planning::toStr(sps_res) << ", " << sps_output.percentage_complete * 100
-                   << ", " << duration.count() << ",\n";
+        // // Try planning
+        // for (size_t i = 0; i < num_sps; ++i)
+        // {
+        //     ap_planning::APPlanningResponse sps_output;
+        //     auto start = std::chrono::high_resolution_clock::now();
+        //     auto sps_res = sequential_step_planner.plan(req, sps_output);
+        //     auto stop = std::chrono::high_resolution_clock::now();
+        //     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+        //     if (sps_res == ap_planning::SUCCESS)
+        //     {
+        //         std::cout << "\n\n\nSPS planning: Success!!\n\n";
+        //         std::cout << "Trajectory is: " << sps_output.percentage_complete * 100
+        //                   << "% complete, and has length: " << sps_output.path_length << "\n";
+        //         ROS_WARN("Planning time: %.6f seconds", duration.count() / 1e6);
+        //         auto joint_distance = calculate_joint_distance(sps_output.joint_trajectory);
+        //         ROS_WARN("Joint distance: %.6f", joint_distance);
+        //         ROS_WARN("Number of waypoints: %zu", sps_output.joint_trajectory.points.size());
+		// // Write data to file
+		// const std::string planner_type ="SPS";
+        //         if (!write_data_to_file(planner_type, fk_pos, fk_quat, task_info, duration, joint_distance)){
+		    // return -1;
+	        // }
+        //         ROS_WARN("Trying to execute trajectory on the robot");
+        //         if (show_trajectories)
+        //         {
+        //             show_trajectory(sps_output.joint_trajectory, visual_tools);
+        //         }
+		// // if (!js_sub.sendJointTrajectory(sps_output.joint_trajectory)){return -1;}
+        //         last_plan = sps_output;
+        //     }
+        //     else
+        //     {
+        //         std::cout << "\n\n\nSPS planning: Fail (" << ap_planning::toStr(sps_res) << ")\n\n";
+        //         std::cout << "Trajectory is: " << sps_output.percentage_complete * 100
+        //                   << "% complete, and has length: " << sps_output.path_length << "\n";
+        //     }
+        //     ss_sps << sample << ", SPS, " << ap_planning::toStr(sps_res) << ", " << sps_output.percentage_complete * 100
+        //            << ", " << duration.count() << ",\n";
 
-            // if (sps_res == ap_planning::NO_IK_SOLUTION) {
-            //   sequential_step_planner = ap_planning::SequentialStepPlanner(nh);
-            //   sequential_step_planner.initialize();
-            // }
-        }
+        //     // if (sps_res == ap_planning::NO_IK_SOLUTION) {
+        //     //   sequential_step_planner = ap_planning::SequentialStepPlanner(nh);
+        //     //   sequential_step_planner.initialize();
+        //     // }
+        // }
     }
 
     ROS_ERROR_STREAM("\n\nAll done with trajectories\n\n");

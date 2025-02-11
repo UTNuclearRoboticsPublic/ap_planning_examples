@@ -341,55 +341,55 @@ int main(int argc, char **argv)
     // task_info.screw_location = Eigen::Vector3d(0.945425 ,-0.133055, -0.464318); 
     // task_info.screw_goal = 0.628319; // Fails
     // task_info.screw_goal = 0.628319 *0.81; // MAX
-    // // screw type for this task is rotation and set by default, ensure screw_msg member is_pure_translation is not set down below while planning
+    // screw type for this task is rotation and set by default, ensure screw_msg member is_pure_translation is not set down below while planning
     //---------------------------------------------//
     // // Task Info -- PELICAN 2
     // task_info.start_state = (Eigen::VectorXd(6)<<-0.10534,0.30302,1.23042,-0.08751,-1.45407,0.00974).finished(); 
     // task_info.screw_axis = Eigen::Vector3d(0 ,1 ,0);
     // task_info.screw_location = Eigen::Vector3d(0.895717 ,-0.0469712  ,-0.516762); 
-    // // task_info.screw_goal = 0.785398;
-    // task_info.screw_goal = M_PI/2.0 * 0.53; //MAX
+    // task_info.screw_goal = 0.785398;
+    // // task_info.screw_goal = M_PI/2.0 * 0.53; //MAX
     //---------------------------------------------//
     // // Task Info -- PELICAN 3
     // task_info.start_state = (Eigen::VectorXd(6)<<-0.05821,0.30447,1.13644,-0.10949,-1.35613,-0.00345).finished(); 
     // task_info.screw_axis = Eigen::Vector3d(0 ,1 ,0);
     // task_info.screw_location = Eigen::Vector3d(0.933395 ,-0.0165794  ,-0.508373);
-    // // task_info.screw_goal = 0.837758;
-    // task_info.screw_goal =0.837758 *0.9; //MAX
+    // task_info.screw_goal = 0.837758;
+    // // task_info.screw_goal =0.837758 *0.9; //MAX
     //---------------------------------------------//
     // // // Task Info -- PELICAN 4
     // task_info.start_state = (Eigen::VectorXd(6)<<-0.15015,0.29943,0.86748,0.05041,-0.75459,-1.67907).finished(); 
     // task_info.screw_axis = Eigen::Vector3d(0, 1, 0);
     // task_info.screw_location = Eigen::Vector3d(1.0107, -0.115859, -0.519666); 
-    // // task_info.screw_goal =0.448799 ;
-    // task_info.screw_goal =0.448799*0.94 ;//MAX
+    // task_info.screw_goal =0.448799 ;
+    // // task_info.screw_goal =0.448799*0.94 ;//MAX
     //---------------------------------------------//
     // // // Task Info -- PELICAN 5
     // task_info.start_state = (Eigen::VectorXd(6)<<-0.22924,0.31410,0.93179,-0.22954,-1.15600,0.06513).finished(); 
     // task_info.screw_axis = Eigen::Vector3d(0, 1, 0);
     // task_info.screw_location = Eigen::Vector3d(0.992715, -0.122151, -0.481894); 
-    // // task_info.screw_goal = 0.698132;
-    // task_info.screw_goal = 0.698132 * 0.93;//MAX
+    // task_info.screw_goal = 0.698132;
+    // // task_info.screw_goal = 0.698132 * 0.93;//MAX
     //---------------------------------------------//
     // // // Task Info -- DUFFLE 1
     // task_info.start_state = (Eigen::VectorXd(6)<<-0.00842,-0.66004,0.64303,-0.01130,-0.02389,0.01587).finished(); 
     // task_info.screw_axis = Eigen::Vector3d(0, -1,  0);
     // task_info.screw_location = Eigen::Vector3d(0.864747, -0.00722478,    0.297397); 
-    // // task_info.screw_goal = 0.15;
+    // task_info.screw_goal = 0.15;
     // // task_info.screw_goal = ;//MAX -- FAIL
     //---------------------------------------------//
     // // // Task Info -- DUFFLE 2
     // task_info.start_state = (Eigen::VectorXd(6)<<0.04015,-0.04417,1.15805,-0.15848,-0.22914,0.01404).finished(); 
     // task_info.screw_axis = Eigen::Vector3d(0 ,-1  ,0);
     // task_info.screw_location = Eigen::Vector3d(0.705944 ,0.0353738 ,-0.465464); 
-    // // task_info.screw_goal = 0.3;
-    // task_info.screw_goal = 0.3 * 1.2;//MAX 
+    // task_info.screw_goal = 0.3;
+    // // task_info.screw_goal = 0.3 * 1.2;//MAX 
     //---------------------------------------------//
     // // // Task Info -- DUFFLE 3
     // task_info.start_state = (Eigen::VectorXd(6)<<-0.22567,-0.46629,2.00996,-0.10792,0.04345,-0.03772).finished(); 
     // task_info.screw_axis = Eigen::Vector3d(1 ,0 ,0);
     // task_info.screw_location = Eigen::Vector3d(0.375161 ,-0.087067 ,-0.444478); 
-    // // task_info.screw_goal = 0.3;
+    // task_info.screw_goal = 0.3;
     // // task_info.screw_goal = 0.3;//MAX
     //---------------------------------------------//
     // // // Task Info -- DUFFLE 4
@@ -397,7 +397,7 @@ int main(int argc, char **argv)
     // task_info.screw_axis = Eigen::Vector3d(-1  ,0  ,0);
     // task_info.screw_location = Eigen::Vector3d(0.802418 ,-0.0115271  ,-0.434995); 
     // task_info.screw_goal = 0.3;
-    // task_info.screw_goal = ;//MAX -- FAIL
+    // // task_info.screw_goal = ;//MAX -- FAIL
     //---------------------------------------------//
     // // // Task Info -- DUFFLE 5
     // task_info.start_state = (Eigen::VectorXd(6)<<0.87980,-0.32586,1.69539,1.23820,-0.64217,-0.35225).finished(); 
@@ -411,15 +411,15 @@ int main(int argc, char **argv)
     // task_info.screw_axis = Eigen::Vector3d(-1.0 ,0.0,  0.0);
     // task_info.screw_location = Eigen::Vector3d(0.835545  ,0.312095 ,0.0213549); 
     // task_info.pitch = 0.01;
-    // // task_info.screw_goal = 0.785398;
-    // task_info.screw_goal =0.785398* 0.8 ;//MAX
+    // task_info.screw_goal = 0.785398;
+    // // task_info.screw_goal =0.785398* 0.8 ;//MAX
     //---------------------------------------------//
     // // // Task Info -- NUT 2
     // task_info.start_state = (Eigen::VectorXd(6)<<0.30567,-0.61542,0.98007,1.56896,-0.08781,-2.46185).finished(); 
     // task_info.screw_axis = Eigen::Vector3d(1.0, 0.0, 0.0);
     // task_info.screw_location = Eigen::Vector3d(0.82715  ,0.323029 ,0.0522127); 
     // task_info.pitch = 0.01;
-    // // task_info.screw_goal = 0.785398;
+    // task_info.screw_goal = 0.785398;
     // // task_info.screw_goal =;//MAX -- FAIL
     //---------------------------------------------//
     // // // Task Info -- NUT 3
@@ -427,24 +427,24 @@ int main(int argc, char **argv)
     // task_info.screw_axis = Eigen::Vector3d(-1,  0,  0);
     // task_info.screw_location = Eigen::Vector3d(0.760197 ,-0.243811 ,0.0245757); 
     // task_info.pitch = 0.01;
-    // // task_info.screw_goal = 0.785398;
-    // task_info.screw_goal =M_PI*0.84;//MAX
+    // task_info.screw_goal = 0.785398;
+    // // task_info.screw_goal =M_PI*0.84;//MAX
     //---------------------------------------------//
     // // // Task Info -- NUT 4
     // task_info.start_state = (Eigen::VectorXd(6)<<-0.26365,-0.32357,0.72647,0.59626,-0.49524,-0.49605).finished(); 
     // task_info.screw_axis = Eigen::Vector3d(-1,  0,  0);
     // task_info.screw_location = Eigen::Vector3d(0.864756 ,-0.367491 ,0.0217763); 
     // task_info.pitch = 0.01;
-    // // task_info.screw_goal = 0.785398;
-    // task_info.screw_goal = M_PI*0.3;//MAX
+    // task_info.screw_goal = 0.785398;
+    // // task_info.screw_goal = M_PI*0.3;//MAX
     //---------------------------------------------//
     // // Task Info -- NUT 5
     task_info.start_state = (Eigen::VectorXd(6)<<-0.24940,-0.44696,0.92226,0.66251,-0.53774,-0.30187).finished(); 
     task_info.screw_axis = Eigen::Vector3d(-1,  0,  0);
     task_info.screw_location = Eigen::Vector3d(0.84111, -0.357813, 0.0218069); 
     task_info.pitch = 0.01;
-    // task_info.screw_goal = 1.0472;
-    task_info.screw_goal = M_PI/2.0 * 0.84;//MAX
+    task_info.screw_goal = 1.0472;
+    // task_info.screw_goal = M_PI/2.0 * 0.84;//MAX
     //---------------------------------------------//
 
     robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
@@ -589,100 +589,100 @@ int main(int argc, char **argv)
 
         show_multi_screw(req, visual_tools);
 
-        // for (size_t i = 0; i < num_sample; ++i)
-        // {
-        //     std::cout << "Starting i = " << i << "\n";
-        //     ap_planning::APPlanningResponse result;
-        //     auto start = std::chrono::high_resolution_clock::now();
-        //     ap_planning::Result success = ap_planner.plan(req, result);
-        //     auto stop = std::chrono::high_resolution_clock::now();
-        //     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        //     if (success == ap_planning::SUCCESS)
-        //     {
-        //         std::cout << "\n\n\nDSS planning: Success!!\n\n";
-        //         std::cout << "Trajectory is: " << result.percentage_complete * 100
-        //                   << "% complete, and has length: " << result.path_length
-        //                   << ", is valid: " << result.trajectory_is_valid << "\n";
-        //         ROS_WARN("Planning time: %.6f seconds", duration.count() / 1e6);
-        //         auto joint_distance = calculate_joint_distance(result.joint_trajectory);
-        //         ROS_WARN("Joint distance: %.6f", joint_distance);
-        //         ROS_WARN("Number of waypoints: %zu", result.joint_trajectory.points.size());
+        for (size_t i = 0; i < num_sample; ++i)
+        {
+            std::cout << "Starting i = " << i << "\n";
+            ap_planning::APPlanningResponse result;
+            auto start = std::chrono::high_resolution_clock::now();
+            ap_planning::Result success = ap_planner.plan(req, result);
+            auto stop = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+            if (success == ap_planning::SUCCESS)
+            {
+                std::cout << "\n\n\nDSS planning: Success!!\n\n";
+                std::cout << "Trajectory is: " << result.percentage_complete * 100
+                          << "% complete, and has length: " << result.path_length
+                          << ", is valid: " << result.trajectory_is_valid << "\n";
+                ROS_WARN("Planning time: %.6f seconds", duration.count() / 1e6);
+                auto joint_distance = calculate_joint_distance(result.joint_trajectory);
+                ROS_WARN("Joint distance: %.6f", joint_distance);
+                ROS_WARN("Number of waypoints: %zu", result.joint_trajectory.points.size());
 
-		// // Write data to file
-		// const std::string planner_type ="DSS";
-        //         if (!write_data_to_file(planner_type, fk_pos, fk_quat, task_info, duration, joint_distance)){
-		    // return -1;
-	        // }
+		// Write data to file
+		const std::string planner_type ="DSS";
+                if (!write_data_to_file(planner_type, fk_pos, fk_quat, task_info, duration, joint_distance)){
+		    return -1;
+	        }
 
-        //         ROS_WARN("Trying to execute trajectory on the robot");
+                ROS_WARN("Trying to execute trajectory on the robot");
 
-        //         if (show_trajectories)
-        //         {
-        //             show_trajectory(result.joint_trajectory, visual_tools);
-        //         }
+                if (show_trajectories)
+                {
+                    show_trajectory(result.joint_trajectory, visual_tools);
+                }
 		// if (!js_sub.sendJointTrajectory(result.joint_trajectory)){return -1;}
-        //         last_plan = result;
-        //     }
-        //     else
-        //     {
-        //         std::cout << "\n\n\nDSS planning: Fail (" << ap_planning::toStr(success) << ")\n\n";
-        //     }
+                last_plan = result;
+            }
+            else
+            {
+                std::cout << "\n\n\nDSS planning: Fail (" << ap_planning::toStr(success) << ")\n\n";
+            }
 
-        //     ss_dssp << sample << ", DSS, " << ap_planning::toStr(success) << ", " << result.percentage_complete * 100
-        //             << ", " << duration.count() << ", " << result.path_length << ",\n";
-        // }
+            ss_dssp << sample << ", DSS, " << ap_planning::toStr(success) << ", " << result.percentage_complete * 100
+                    << ", " << duration.count() << ", " << result.path_length << ",\n";
+        }
 
-        // Now move to SPS planner
+        // // Now move to SPS planner
         // if (show_trajectories)
         // {
         //     visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to plan again using "
         //                         "SPS planner");
         // }
 
-        // Try planning
-        for (size_t i = 0; i < num_sps; ++i)
-        {
-            ap_planning::APPlanningResponse sps_output;
-            auto start = std::chrono::high_resolution_clock::now();
-            auto sps_res = sequential_step_planner.plan(req, sps_output);
-            auto stop = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-            if (sps_res == ap_planning::SUCCESS)
-            {
-                std::cout << "\n\n\nSPS planning: Success!!\n\n";
-                std::cout << "Trajectory is: " << sps_output.percentage_complete * 100
-                          << "% complete, and has length: " << sps_output.path_length << "\n";
-                ROS_WARN("Planning time: %.6f seconds", duration.count() / 1e6);
-                auto joint_distance = calculate_joint_distance(sps_output.joint_trajectory);
-                ROS_WARN("Joint distance: %.6f", joint_distance);
-                ROS_WARN("Number of waypoints: %zu", sps_output.joint_trajectory.points.size());
-		// Write data to file
-		const std::string planner_type ="SPS";
-                if (!write_data_to_file(planner_type, fk_pos, fk_quat, task_info, duration, joint_distance)){
-		    return -1;
-	        }
-                ROS_WARN("Trying to execute trajectory on the robot");
-                if (show_trajectories)
-                {
-                    show_trajectory(sps_output.joint_trajectory, visual_tools);
-                }
-		// if (!js_sub.sendJointTrajectory(sps_output.joint_trajectory)){return -1;}
-                last_plan = sps_output;
-            }
-            else
-            {
-                std::cout << "\n\n\nSPS planning: Fail (" << ap_planning::toStr(sps_res) << ")\n\n";
-                std::cout << "Trajectory is: " << sps_output.percentage_complete * 100
-                          << "% complete, and has length: " << sps_output.path_length << "\n";
-            }
-            ss_sps << sample << ", SPS, " << ap_planning::toStr(sps_res) << ", " << sps_output.percentage_complete * 100
-                   << ", " << duration.count() << ",\n";
+        // // Try planning
+        // for (size_t i = 0; i < num_sps; ++i)
+        // {
+        //     ap_planning::APPlanningResponse sps_output;
+        //     auto start = std::chrono::high_resolution_clock::now();
+        //     auto sps_res = sequential_step_planner.plan(req, sps_output);
+        //     auto stop = std::chrono::high_resolution_clock::now();
+        //     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+        //     if (sps_res == ap_planning::SUCCESS)
+        //     {
+        //         std::cout << "\n\n\nSPS planning: Success!!\n\n";
+        //         std::cout << "Trajectory is: " << sps_output.percentage_complete * 100
+        //                   << "% complete, and has length: " << sps_output.path_length << "\n";
+        //         ROS_WARN("Planning time: %.6f seconds", duration.count() / 1e6);
+        //         auto joint_distance = calculate_joint_distance(sps_output.joint_trajectory);
+        //         ROS_WARN("Joint distance: %.6f", joint_distance);
+        //         ROS_WARN("Number of waypoints: %zu", sps_output.joint_trajectory.points.size());
+		// // Write data to file
+		// const std::string planner_type ="SPS";
+        //         if (!write_data_to_file(planner_type, fk_pos, fk_quat, task_info, duration, joint_distance)){
+		    // return -1;
+	        // }
+        //         ROS_WARN("Trying to execute trajectory on the robot");
+        //         if (show_trajectories)
+        //         {
+        //             show_trajectory(sps_output.joint_trajectory, visual_tools);
+        //         }
+		// // if (!js_sub.sendJointTrajectory(sps_output.joint_trajectory)){return -1;}
+        //         last_plan = sps_output;
+        //     }
+        //     else
+        //     {
+        //         std::cout << "\n\n\nSPS planning: Fail (" << ap_planning::toStr(sps_res) << ")\n\n";
+        //         std::cout << "Trajectory is: " << sps_output.percentage_complete * 100
+        //                   << "% complete, and has length: " << sps_output.path_length << "\n";
+        //     }
+        //     ss_sps << sample << ", SPS, " << ap_planning::toStr(sps_res) << ", " << sps_output.percentage_complete * 100
+        //            << ", " << duration.count() << ",\n";
 
-            // if (sps_res == ap_planning::NO_IK_SOLUTION) {
-            //   sequential_step_planner = ap_planning::SequentialStepPlanner(nh);
-            //   sequential_step_planner.initialize();
-            // }
-        }
+        //     // if (sps_res == ap_planning::NO_IK_SOLUTION) {
+        //     //   sequential_step_planner = ap_planning::SequentialStepPlanner(nh);
+        //     //   sequential_step_planner.initialize();
+        //     // }
+        // }
     }
 
     ROS_ERROR_STREAM("\n\nAll done with trajectories\n\n");
